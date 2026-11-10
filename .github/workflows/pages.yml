@@ -14,8 +14,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
-      VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+      VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://ynrvhjbttaiiqkbtmxbs.supabase.co' }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY || 'sb_publishable_BwAY7Z80Sd79O1FeCsYnug_9l-y4f8F' }}
       VITE_MAP_STYLE_URL: ${{ vars.MAP_STYLE_URL }}
       PAGES_BASE_PATH: /${{ github.event.repository.name }}/
     steps:
