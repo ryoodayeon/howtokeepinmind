@@ -18,6 +18,7 @@ import {
   PageHead,
 } from "./UI";
 import { errorMessage } from "./TastingForm";
+import { originMapPosition } from "@/lib/origin-map";
 export default function Atlas({
   data,
   styleUrl,
@@ -49,31 +50,29 @@ export default function Atlas({
     beverages.some((b) => b.origin_ids.includes(o.id)),
   );
   const selectedOrigin = data.origins.find((o) => o.id === selected);
+  const selectedPosition = selectedOrigin
+    ? originMapPosition(selectedOrigin)
+    : null;
+  // Show approximate regional/country markers without altering unconfirmed saved data.
   const geojson = JSON.stringify({
     type: "FeatureCollection",
-    features: origins
-      .filter(
-        (o) =>
-          o.confirmed &&
-          o.latitude !== null &&
-          o.longitude !== null &&
-          o.precision !== "unresolved",
-      )
-      .map((o) => ({
+    features: origins.flatMap((o) => {
+      const position = originMapPosition(o);
+      const beverage = beverages.find((b) => b.origin_ids.includes(o.id));
+      if (!position || !beverage) return [];
+      return [{
         type: "Feature",
         id: o.id,
-        geometry: { type: "Point", coordinates: [o.longitude, o.latitude] },
+        geometry: { type: "Point", coordinates: position.coordinates },
         properties: {
           id: o.id,
           name: o.display_name || o.subregion || o.region || o.country,
-          color:
-            categoryInfo[
-              beverages.find((b) => b.origin_ids.includes(o.id))!.category
-            ].color,
-          category: beverages.find((b) => b.origin_ids.includes(o.id))!
-            .category,
+          color: categoryInfo[beverage.category].color,
+          category: beverage.category,
+          positionSource: position.source,
         },
-      })),
+      }];
+    }),
   });
   useEffect(() => {
     let live = true;
@@ -154,6 +153,9 @@ export default function Atlas({
               "circle-color": ["get", "color"],
               "circle-stroke-width": 3,
               "circle-stroke-color": "#fff",
+              "circle-opacity": [
+                "case", ["==", ["get", "positionSource"], "confirmed"], 1, 0.8,
+              ],
             },
           });
           for (const category of CATEGORIES) {
@@ -220,17 +222,12 @@ export default function Atlas({
       );
   }, [geojson, loaded]);
   useEffect(() => {
-    if (
-      loaded &&
-      selectedOrigin?.confirmed &&
-      selectedOrigin.longitude !== null &&
-      selectedOrigin.latitude !== null
-    )
+    if (loaded && selectedPosition)
       map.current?.easeTo({
-        center: [selectedOrigin.longitude, selectedOrigin.latitude],
-        zoom: selectedOrigin.precision === "country" ? 3 : 7,
+        center: selectedPosition.coordinates,
+        zoom: selectedPosition.source === "country" ? 3 : 7,
       });
-  }, [selected, loaded]);
+  }, [selected, loaded, selectedPosition?.coordinates[0], selectedPosition?.coordinates[1], selectedPosition?.source]);
   useEffect(() => {
     const current = map.current;
     if (!current || !picking || !loaded) return;
@@ -315,7 +312,7 @@ export default function Atlas({
           )}
           <div className="map-caption">
             <Navigation size={13} />
-            생산 산지 기준 · 대표 좌표는 대략적인 위치예요.
+            생산 산지 기준 · 밝은 마커는 저장된 좌표, 반투명 마커는 지역·국가의 대략적인 위치예요.
           </div>
         </div>
         <aside className="origin-panel">
@@ -350,11 +347,15 @@ export default function Atlas({
                   .join(" / ")}
               </p>
               <span className="precision-label">
-                {selectedOrigin.confirmed && selectedOrigin.latitude !== null
+                {selectedPosition?.source === "confirmed"
                   ? selectedOrigin.precision === "exact"
                     ? "확인한 생산지 위치"
-                    : "지역을 대표하는 대략적인 위치"
-                  : "좌표 없이 저장된 산지"}
+                    : "사용자가 확인한 대표 좌표"
+                  : selectedPosition?.source === "region"
+                    ? "지도상 지역 대표 위치 · 정확한 산지 좌표 미확인"
+                    : selectedPosition?.source === "country"
+                      ? "지도상 국가 대표 위치 · 정확한 산지 좌표 미확인"
+                      : "지도에 표시할 위치를 찾지 못했어요"}
               </span>
               <div className="origin-stats">
                 <div>
@@ -423,9 +424,13 @@ export default function Atlas({
                       </strong>
                       <small>
                         {o.country}
-                        {!o.confirmed || o.latitude === null
-                          ? " · 좌표 미등록"
-                          : ""}
+                        {originMapPosition(o)?.source === "region"
+                          ? " · 대략적인 지역 위치"
+                          : originMapPosition(o)?.source === "country"
+                            ? " · 대략적인 국가 위치"
+                            : !originMapPosition(o)
+                              ? " · 위치 미확인"
+                              : ""}
                       </small>
                     </span>
                   </button>
