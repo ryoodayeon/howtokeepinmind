@@ -59,6 +59,7 @@ const regionCenters: Record<string, Record<string, [number, number]>> = {
     herault: [3.45, 43.62], jura: [5.69, 46.75],
     jurancon: [-0.4, 43.27], "languedoc-roussillon": [3.1, 43.6],
     lirac: [4.69, 44.04], "loire valley": [0.7, 47.3],
+    "collines rhodaniennes": [4.83, 45.5],
     "macon-chaintre": [4.78, 46.26], "macon-davaye": [4.75, 46.3],
     minervois: [2.64, 43.32], "montlouis-sur-loire": [0.84, 47.39],
     "pouilly-fume": [2.96, 47.28], "saint-drezery": [3.97, 43.73],
