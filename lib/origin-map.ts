@@ -128,8 +128,12 @@ export function originMapPosition(origin: Origin): MapPosition | null {
     return { coordinates: [origin.longitude, origin.latitude], source: "confirmed" };
   }
   const country = normalize(origin.country);
-  const areas = [origin.subregion, origin.region, origin.display_name]
-    .map(normalize).filter(Boolean);
+  // A display label must not override an explicit but unmapped region.
+  const areas = [
+    origin.subregion,
+    origin.region,
+    !origin.subregion && !origin.region ? origin.display_name : "",
+  ].map(normalize).filter(Boolean);
   const regionPoints = regionCenters[country];
   if (regionPoints) {
     for (const area of areas) {
