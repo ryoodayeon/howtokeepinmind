@@ -127,16 +127,18 @@ export function originMapPosition(origin: Origin): MapPosition | null {
     return { coordinates: [origin.longitude, origin.latitude], source: "confirmed" };
   }
   const country = normalize(origin.country);
-  const area = normalize(origin.subregion || origin.region || origin.display_name);
+  const areas = [origin.subregion, origin.region, origin.display_name]
+    .map(normalize).filter(Boolean);
   const regionPoints = regionCenters[country];
-  if (area && regionPoints) {
-    const exact = regionPoints[area];
-    if (exact) return { coordinates: exact, source: "region" };
-    const broader = Object.keys(regionPoints)
-      .sort((a, b) => b.length - a.length)
-      .find((key) => area.startsWith(key + " "));
-    if (broader)
-      return { coordinates: regionPoints[broader], source: "region" };
+  if (regionPoints) {
+    for (const area of areas) {
+      const exact = regionPoints[area];
+      if (exact) return { coordinates: exact, source: "region" };
+      const broader = Object.keys(regionPoints)
+        .sort((a, b) => b.length - a.length)
+        .find((key) => area.startsWith(key + " "));
+      if (broader) return { coordinates: regionPoints[broader], source: "region" };
+    }
   }
   const approximateCountry = countryCenters[country];
   return approximateCountry
