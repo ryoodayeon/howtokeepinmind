@@ -14,8 +14,6 @@ import {
 import { exportArchive, type Archive } from "@/lib/domain";
 import type { Repository } from "@/lib/repository";
 import { PageHead } from "./UI";
-import ImportVivino from "./ImportVivino";
-import ImportLabels from "./ImportLabels";
 export default function Settings({
   data,
   repo,
@@ -25,6 +23,7 @@ export default function Settings({
   navigate,
   namespace,
   onImported,
+  onGalleryFiles,
 }: {
   data: Archive;
   repo: Repository;
@@ -34,6 +33,7 @@ export default function Settings({
   navigate: (p: string) => void;
   namespace: string;
   onImported: () => Promise<void>;
+  onGalleryFiles: (files: File[]) => void;
 }) {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -103,13 +103,20 @@ export default function Settings({
   return (
     <div className="settings-width">
       <PageHead title="설정" />
-      <ImportLabels data={data} repo={repo} onImported={onImported} />
-      <ImportVivino
-        data={data}
-        repo={repo}
-        namespace={namespace}
-        onImported={onImported}
-      />
+      <section className="settings-card">
+        <h2>갤러리에서 가져오기</h2>
+        <p className="muted">라벨 사진을 선택하고 기록을 이어서 작성하세요. 한 기록에 최대 12장까지 추가할 수 있어요.</p>
+        <label className="secondary" style={{cursor:"pointer"}}>
+          갤러리 사진 선택
+          <input aria-label="갤러리 사진 선택" type="file" accept="image/jpeg,image/png,image/webp" multiple style={{display:"none"}} onChange={e=>{
+            const files=Array.from(e.target.files||[]);e.target.value="";
+            if(files.length>12){setMessage("사진은 최대 12장까지 선택해주세요.");return;}
+            if(files.some(f=>!["image/jpeg","image/png","image/webp"].includes(f.type))){setMessage("JPG, PNG, WebP 사진을 선택해주세요.");return;}
+            if(files.length)onGalleryFiles(files);
+          }}/>
+        </label>
+        {message&&<p role="status">{message}</p>}
+      </section>
       <section className="settings-card">
         <div className="settings-title">
           <ShieldCheck size={21} />

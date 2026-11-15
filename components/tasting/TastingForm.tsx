@@ -110,6 +110,8 @@ export default function TastingForm({
   onSave,
   navigate,
   userKey,
+  galleryFiles = [],
+  onGalleryConsumed,
 }: {
   data: Archive;
   beverageId?: string;
@@ -117,6 +119,8 @@ export default function TastingForm({
   onSave: (input: SaveInput) => Promise<void>;
   navigate: (p: string) => void;
   userKey: string;
+  galleryFiles?: File[];
+  onGalleryConsumed?: () => void;
 }) {
   const [draft, setDraft] = useState<Draft>(() =>
     initial(data, beverageId, tastingId),
@@ -133,6 +137,7 @@ export default function TastingForm({
   const [uploadProgress, setUploadProgress] = useState("");
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const finished = useRef(false);
+  const galleryConsumed = useRef(false);
   const chain = useRef(Promise.resolve());
   const draftKey = `${userKey}:${tastingId || "new"}`;
   const b = draft.beverage,
@@ -235,7 +240,12 @@ export default function TastingForm({
       ...data.tastings.flatMap((t) => t.aromas),
     ]),
   ].filter((x) => x.toLocaleLowerCase().includes(tagQuery.toLocaleLowerCase()));
-  async function addPhotos(files: FileList | null) {
+  useEffect(() => {
+    if (!ready || savedDraft || galleryConsumed.current || !galleryFiles.length) return;
+    galleryConsumed.current = true;
+    void addPhotos(galleryFiles).finally(() => onGalleryConsumed?.());
+  }, [ready, savedDraft, galleryFiles]);
+  async function addPhotos(files: FileList | File[] | null) {
     if (!files) return;
     if (draft.photos.length + files.length > 12) {
       setError("한 번의 시음에 사진은 최대 12장까지 추가할 수 있어요.");

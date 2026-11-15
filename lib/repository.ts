@@ -80,9 +80,13 @@ async function localMutate(fn: (a: Archive) => Archive) {
   });
 }
 export class Repository {
+  projectUrl: string;
+  publishableKey: string;
   client: SupabaseClient | null;
   mode: "cloud" | "local";
   constructor(c: Config) {
+    this.projectUrl = c.supabaseUrl;
+    this.publishableKey = c.supabaseKey;
     this.mode = c.supabaseUrl && c.supabaseKey ? "cloud" : "local";
     this.client =
       this.mode === "cloud" ? createClient(c.supabaseUrl, c.supabaseKey) : null;

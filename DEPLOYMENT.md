@@ -50,3 +50,14 @@ Browser-local records and cloud records remain separate. Changing configuration 
 ## Verification before reporting cloud migration complete
 
 Confirm the database migrations succeeded, private bucket and owner policies exist, account login works, and the same records can be loaded from another browser/account as appropriate. Another authenticated account must see no owner data. Verify GitHub Actions and Pages deployment results separately. A source upload or successful static build is not proof that either service is connected.
+
+## Google sign-in
+
+The UI checks `/auth/v1/settings` and enables Google only when that provider is configured. Email remains a collapsed fallback. No Google secret belongs in this repository or the frontend.
+
+1. In Google Auth Platform, create a Web application OAuth client. Use `https://ryoodayeon.github.io` as an authorized origin (and the existing Sites origin if using Google there).
+2. Set the authorized redirect URI to `https://ynrvhjbttaiiqkbtmxbs.supabase.co/auth/v1/callback`.
+3. In this Supabase project's Authentication → Sign In / Providers → Google, enter the client ID and secret and enable Google. Preserve the existing redirect allowlist, including `https://ryoodayeon.github.io/howtokeepinmind/`.
+4. Sign in with `dbeks0327@yonsei.ac.kr`; Supabase's verified same-email identity linking should retain the existing account. Verify the account ID and existing archive before reporting the migration complete.
+
+Provider configuration remains a separate required account-side step. The button's presence alone is not evidence that Google sign-in works. No Gmail or Drive permissions are requested.

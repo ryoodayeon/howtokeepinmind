@@ -33,6 +33,7 @@ import Details from "./Details";
 import Atlas from "./Atlas";
 import Insights from "./Insights";
 import Settings from "./Settings";
+import GoogleSignIn from "./GoogleSignIn";
 import { PageHead } from "./UI";
 const navs = [
   { path: "/archive", label: "Archive", ko: "나의 기록", I: ArchiveIcon },
@@ -60,6 +61,7 @@ export default function App({ config }: { config: Config }) {
   const [authReady, setAuthReady] = useState(false);
   const [layout, setLayoutState] = useState("list");
   const [toast, setToast] = useState("");
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [offline, setOffline] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
   const loadGeneration = useRef(0);
@@ -249,6 +251,8 @@ export default function App({ config }: { config: Config }) {
         onSave={save}
         navigate={navigate}
         userKey={user?.id || "local"}
+        galleryFiles={galleryFiles}
+        onGalleryConsumed={() => setGalleryFiles([])}
       />
     );
   else if (pieces[0] === "beverages" || pieces[0] === "tastings")
@@ -290,9 +294,10 @@ export default function App({ config }: { config: Config }) {
         repo={repo}
         email={user?.email || ""}
         namespace={user?.id || "local"}
+        onGalleryFiles={(files) => { setGalleryFiles(files); navigate("/tastings/new"); }}
         onImported={async () => {
           await refresh();
-          setToast("Vivino 기록을 가져왔습니다.");
+          setToast("기록을 가져왔습니다.");
         }}
         layout={layout}
         setLayout={setLayout}
@@ -519,6 +524,9 @@ function Login({
           아카이브로 이동
         </button>
       ) : (
+        <>
+        <GoogleSignIn repo={repo} redirectTo={authRedirectUrl} />
+        <details><summary>이메일로 로그인</summary>
         <form
           onSubmit={async (e) => {
             e.preventDefault();
@@ -564,6 +572,7 @@ function Login({
           )}
           <small>비밀번호 없이 이메일 링크로 로그인해요.</small>
         </form>
+        </details></>
       )}
     </div>
   );
