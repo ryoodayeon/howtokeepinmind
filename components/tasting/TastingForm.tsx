@@ -54,6 +54,7 @@ import {
   OriginFields,
   PageHead,
 } from "./UI";
+import { takeGalleryFiles } from "@/lib/gallery";
 type Draft = {
   beverage: Beverage;
   tasting: Tasting;
@@ -110,8 +111,6 @@ export default function TastingForm({
   onSave,
   navigate,
   userKey,
-  galleryFiles = [],
-  onGalleryConsumed,
 }: {
   data: Archive;
   beverageId?: string;
@@ -119,8 +118,6 @@ export default function TastingForm({
   onSave: (input: SaveInput) => Promise<void>;
   navigate: (p: string) => void;
   userKey: string;
-  galleryFiles?: File[];
-  onGalleryConsumed?: () => void;
 }) {
   const [draft, setDraft] = useState<Draft>(() =>
     initial(data, beverageId, tastingId),
@@ -241,10 +238,11 @@ export default function TastingForm({
     ]),
   ].filter((x) => x.toLocaleLowerCase().includes(tagQuery.toLocaleLowerCase()));
   useEffect(() => {
-    if (!ready || savedDraft || galleryConsumed.current || !galleryFiles.length) return;
+    if (!ready || savedDraft || galleryConsumed.current) return;
     galleryConsumed.current = true;
-    void addPhotos(galleryFiles).finally(() => onGalleryConsumed?.());
-  }, [ready, savedDraft, galleryFiles]);
+    const galleryFiles = takeGalleryFiles();
+    if (galleryFiles.length) void addPhotos(galleryFiles);
+  }, [ready, savedDraft]);
   async function addPhotos(files: FileList | File[] | null) {
     if (!files) return;
     if (draft.photos.length + files.length > 12) {
