@@ -15,6 +15,7 @@ import { exportArchive, type Archive } from "@/lib/domain";
 import type { Repository } from "@/lib/repository";
 import { PageHead } from "./UI";
 import ImportVivino from "./ImportVivino";
+import ImportLabels from "./ImportLabels";
 export default function Settings({
   data,
   repo,
@@ -102,6 +103,7 @@ export default function Settings({
   return (
     <div className="settings-width">
       <PageHead title="설정" />
+      <ImportLabels data={data} repo={repo} onImported={onImported} />
       <ImportVivino
         data={data}
         repo={repo}
